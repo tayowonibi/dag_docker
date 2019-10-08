@@ -1,4 +1,4 @@
-dask[complete]
+dask
 apache-airflow[gcp]==1.10.4
 apache-airflow[s3]==1.10.4
 google-api-python-client==1.7.11
