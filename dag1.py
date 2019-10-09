@@ -15,7 +15,7 @@ def get_default_args():
 
 dag = DAG(
     dag_id="load_crossref_event_into_bigquery",
-    default_args=get_default_args,
+    default_args=get_default_args(),
     # schedule_interval='0 0 * * *',
     schedule_interval="@once",
     dagrun_timeout=timedelta(minutes=60),
