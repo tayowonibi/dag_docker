@@ -1,35 +1,38 @@
 from airflow import DAG
-import airflow
-from airflow.operators.python_operator import PythonOperator
-from datetime import timedelta
+from airflow.operators.bash_operator import BashOperator
+from datetime import datetime, timedelta
+from airflow.operators.docker_operator import DockerOperator
 
+default_args = {
+        'owner'                 : 'airflow',
+        'description'           : 'Use of the DockerOperator',
+        'depend_on_past'        : False,
+        'start_date'            : datetime(2018, 1, 3),
+        'email_on_failure'      : False,
+        'email_on_retry'        : False,
+        'retries'               : 1,
+        'retry_delay'           : timedelta(minutes=5)
+}
 
-def get_default_args():
-    return {
-        "start_date": airflow.utils.dates.days_ago(1),
-        "retries": 10,
-        "retry_delay": timedelta(minutes=1),
-        "retry_exponential_backoff": True,
-        #"provide_context": True,
-    }
+with DAG('docker_dag', default_args=default_args, schedule_interval="5 * * * *", catchup=False) as dag:
+        t1 = BashOperator(
+                task_id='print_current_date',
+                bash_command='date'
+        )
 
-dag = DAG(
-    dag_id="load_crossref_event_into_bigquery",
-    default_args=get_default_args(),
-    # schedule_interval='0 0 * * *',
-    schedule_interval="@once",
-    dagrun_timeout=timedelta(minutes=60),
-)
+        t2 = DockerOperator(
+                task_id='docker_command',
+                image='centos:latest',
+                api_version='auto',
+                auto_remove=True,
+                command="/bin/sleep 30",
+                docker_url="unix://var/run/docker.sock",
+                network_mode="bridge"
+        )
 
-def make_this():
-    print("tadsdsdsdsddsd")
-    return 
+        t3 = BashOperator(
+                task_id='print_hello',
+                bash_command='echo "hello world"'
+        )
 
-run_this = PythonOperator(
-    task_id='print_the_context',
-    python_callable=make_this,
-    dag=dag,
-)
-
-
-run_this
+        t1 >> t2 >> t3
